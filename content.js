@@ -89,7 +89,7 @@ function getOrganization() {
   // 2. If operatorFromField is empty/null, use companyFromContactInfo.
   // 3. If both are empty, return "Unknown".
 
-  if (operatorFromField) {
+  if (operatorFromField && operatorFromField !== "--") {
     if (companyFromContactInfo && operatorFromField !== companyFromContactInfo) {
       console.log(`[TimeKeeper] Operator mismatch! Field: "${operatorFromField}", Contact Info: "${companyFromContactInfo}". Using Field.`);
     } else {
