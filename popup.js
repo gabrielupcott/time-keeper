@@ -44,6 +44,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     settingsView.classList.remove('active');
     dashboardView.classList.add('active');
   });
+
+  // Listen for storage changes to update the UI in real-time
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local' && changes.time_entries) {
+      console.log('[TimeKeeper] Storage changed, reloading dashboard');
+      loadDashboard();
+    }
+  });
 });
 
 async function loadDashboard() {

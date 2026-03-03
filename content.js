@@ -19,13 +19,90 @@ function getTicketId() {
 }
 
 function getOrganization() {
+  // First, try to find the operator in the specific HTML structure provided (Priority 1)
+  let operatorFromField = null;
+  const operatorLabels = document.querySelectorAll('.ticket-field-label');
+  for (const label of operatorLabels) {
+    if (label.innerText.trim().includes('Operator')) {
+      // The label is inside a div, and the mat-form-field is a sibling of that div's parent or inside the same parent.
+      // Based on the HTML: <div class="ticket-field-label"> Operator </div> is followed by <mat-form-field>
+      const parentContainer = label.parentElement;
+      if (parentContainer) {
+        // Try to find the select value in the same parent container
+        const selectValue = parentContainer.querySelector('.mat-mdc-select-value-text');
+        if (selectValue) {
+          operatorFromField = selectValue.innerText.trim();
+          if (operatorFromField) break;
+        }
+        
+        // If not found, try the next sibling of the label (if label is in its own div)
+        const nextSibling = label.nextElementSibling;
+        if (nextSibling) {
+          const siblingSelectValue = nextSibling.querySelector('.mat-mdc-select-value-text');
+          if (siblingSelectValue) {
+            operatorFromField = siblingSelectValue.innerText.trim();
+            if (operatorFromField) break;
+          }
+        }
+
+        // If still not found, try the parent's next sibling (if label is in a nested div)
+        const parentNextSibling = parentContainer.nextElementSibling;
+        if (parentNextSibling) {
+          const siblingSelectValue = parentNextSibling.querySelector('.mat-mdc-select-value-text');
+          if (siblingSelectValue) {
+            operatorFromField = siblingSelectValue.innerText.trim();
+            if (operatorFromField) break;
+          }
+        }
+      }
+    }
+  }
+
+  // If still not found, try a more direct approach based on the provided HTML structure
+  if (!operatorFromField) {
+    const matSelects = document.querySelectorAll('mat-select[aria-labelledby*="mat-select-value"]');
+    for (const select of matSelects) {
+      const label = select.closest('.ng-star-inserted')?.querySelector('.ticket-field-label');
+      if (label && label.innerText.trim().includes('Operator')) {
+        const selectValue = select.querySelector('.mat-mdc-select-value-text');
+        if (selectValue) {
+          operatorFromField = selectValue.innerText.trim();
+          if (operatorFromField) break;
+        }
+      }
+    }
+  }
+
+  // Fallback to the original organization detection logic (Priority 2)
+  let companyFromContactInfo = null;
   const infoContainers = document.querySelectorAll('.contact-info-container-old');
   for (const container of infoContainers) {
     const contentWrapper = container.querySelector('.content-wrapper');
     if (contentWrapper && contentWrapper.innerText.includes('Company:')) {
-      return contentWrapper.innerText.replace('Company:', '').trim();
+      companyFromContactInfo = contentWrapper.innerText.replace('Company:', '').trim();
+      break;
     }
   }
+
+  // Logic:
+  // 1. If operatorFromField exists, use it (even if it mismatches companyFromContactInfo).
+  // 2. If operatorFromField is empty/null, use companyFromContactInfo.
+  // 3. If both are empty, return "Unknown".
+
+  if (operatorFromField) {
+    if (companyFromContactInfo && operatorFromField !== companyFromContactInfo) {
+      console.log(`[TimeKeeper] Operator mismatch! Field: "${operatorFromField}", Contact Info: "${companyFromContactInfo}". Using Field.`);
+    } else {
+      console.log(`[TimeKeeper] Operator detected from field: ${operatorFromField}`);
+    }
+    return operatorFromField;
+  }
+
+  if (companyFromContactInfo) {
+    console.log(`[TimeKeeper] Company detected from contact info: ${companyFromContactInfo}`);
+    return companyFromContactInfo;
+  }
+
   return "Unknown";
 }
 
@@ -42,10 +119,10 @@ function handlePageChange() {
     lastKnownOrganization = currentOrganization;
   }
 
-  // Detect if organization changed from Unknown to something else
-  const organizationUpdated = lastKnownOrganization === "Unknown" && currentOrganization !== "Unknown";
+  // Detect if organization changed (even if not from Unknown)
+  const organizationUpdated = currentOrganization !== lastKnownOrganization;
   if (organizationUpdated) {
-    console.log(`[TimeKeeper] Organization detected: ${currentOrganization}. Updating entries.`);
+    console.log(`[TimeKeeper] Organization updated: ${lastKnownOrganization} -> ${currentOrganization}. Updating entries.`);
     lastKnownOrganization = currentOrganization;
     // Reset lastKnownTimeEntries to force a re-sync with the new organization name
     lastKnownTimeEntries = null;
@@ -135,13 +212,17 @@ async function checkForNewTimeEntries(ticketId, section) {
     return null;
   }).filter(e => e !== null);
 
-  chrome.runtime.sendMessage({
-    type: 'SYNC_TIME_ENTRIES',
-    data: {
-      ticketId: ticketId,
-      entries: entriesToSync
-    }
-  });
+  if (chrome.runtime?.id) {
+    chrome.runtime.sendMessage({
+      type: 'SYNC_TIME_ENTRIES',
+      data: {
+        ticketId: ticketId,
+        entries: entriesToSync
+      }
+    });
+  } else {
+    console.warn('[TimeKeeper] Extension context invalidated. Please refresh the page.');
+  }
 }
 
 // Keep dialog listener as a secondary method

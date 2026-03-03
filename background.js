@@ -68,9 +68,7 @@ async function updateBadge() {
     .filter(e => e.date === todayISO)
     .reduce((sum, e) => sum + (parseInt(e.hours || 0) * 60) + parseInt(e.minutes || 0), 0);
 
-  const hours = (todayMinutes / 60).toFixed(1);
-  
-  chrome.action.setBadgeText({ text: hours > 0 ? `${hours}h` : '' });
+  chrome.action.setBadgeText({ text: todayMinutes > 0 ? `${todayMinutes}m` : '' });
 
   let badgeColor = '#4CAF50'; // Green (default)
   if (todayMinutes >= 60) {
