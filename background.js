@@ -37,8 +37,14 @@ async function syncTimeEntries({ ticketId, entries }) {
 async function saveTimeEntry(entry) {
   storageQueue = storageQueue.then(async () => {
     console.log('[TimeKeeper] Processing save for entry:', entry);
-    const { time_entries = [] } = await chrome.storage.local.get('time_entries');
+    const { time_entries = [], user_name = '' } = await chrome.storage.local.get(['time_entries', 'user_name']);
     
+    // If a user name is set, only save entries that match that name
+    if (user_name && entry.userName && entry.userName.toLowerCase() !== user_name.toLowerCase()) {
+      console.log(`[TimeKeeper] Ignoring save for user: ${entry.userName} (Expected: ${user_name})`);
+      return;
+    }
+
     const newEntry = {
       id: crypto.randomUUID(),
       timestamp: Date.now(),
@@ -64,14 +70,19 @@ async function updateBadge() {
   
   console.log('[TimeKeeper] Updating badge. Today is:', todayISO);
 
-  const todayMinutes = time_entries
-    .filter(e => e.date === todayISO)
-    .reduce((sum, e) => sum + (parseInt(e.hours || 0) * 60) + parseInt(e.minutes || 0), 0);
+  const todayEntries = time_entries.filter(e => e.date === todayISO);
+  const todayMinutes = todayEntries.reduce((sum, e) => {
+    const mins = (parseInt(e.hours || 0, 10) * 60) + parseInt(e.minutes || 0, 10);
+    console.log(`[TimeKeeper] Entry: ${e.hours}h ${e.minutes}m -> ${mins} mins (Ticket: ${e.ticketId})`);
+    return sum + mins;
+  }, 0);
+
+  console.log(`[TimeKeeper] Total minutes for ${todayISO}: ${todayMinutes}`);
 
   chrome.action.setBadgeText({ text: todayMinutes > 0 ? `${todayMinutes}m` : '' });
 
   let badgeColor = '#4CAF50'; // Green (default)
-  if (todayMinutes >= 60) {
+  if (todayMinutes > 60) {
     badgeColor = '#F44336'; // Red (1 hour+)
   } else if (todayMinutes >= 45) {
     badgeColor = '#FFEB3B'; // Yellow (45m - 1 hour)

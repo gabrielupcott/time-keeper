@@ -155,6 +155,9 @@ function findTimeEntriesSection() {
 }
 
 async function checkForNewTimeEntries(ticketId, section) {
+  // Get the user name from storage to filter entries
+  const { user_name = '' } = await chrome.storage.local.get('user_name');
+  
   // Based on the provided HTML, each entry is an <app-gp-timer>
   const entryElements = document.querySelectorAll('app-gp-timer');
   
@@ -180,6 +183,12 @@ async function checkForNewTimeEntries(ticketId, section) {
     const timeText = el.querySelector('div[style*="font-size: 14px;"]')?.innerText.trim() || "";
     const dateText = el.querySelector('span[style*="color: var(--gp-neutral-white-700);"]')?.innerText.trim() || "";
     const userName = el.querySelector('a')?.innerText.trim() || "";
+
+    // If a user name is set in the extension, only sync entries that match that name
+    if (user_name && userName && userName.toLowerCase() !== user_name.toLowerCase()) {
+      console.log(`[TimeKeeper] Skipping entry for user: ${userName} (Expected: ${user_name})`);
+      return null;
+    }
     
     let entryDate = todayISO;
     if (dateText) {
@@ -194,8 +203,8 @@ async function checkForNewTimeEntries(ticketId, section) {
 
     const timeMatch = timeText.match(/(\d+)h\s*:\s*(\d+)m/);
     if (timeMatch) {
-      const hours = parseInt(timeMatch[1]);
-      const minutes = parseInt(timeMatch[2]);
+      const hours = parseInt(timeMatch[1], 10);
+      const minutes = parseInt(timeMatch[2], 10);
       console.log(`[TimeKeeper] Detected time entry: ${hours}h ${minutes}m for date: ${dateText || 'Today'} (Syncing as: ${entryDate})`);
       
       return {
