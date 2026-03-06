@@ -17,6 +17,7 @@ Follow these steps to get started with Desk365 Time Keeper:
 1.  **Install the Extension**:
 
     ### Google Chrome
+    - Using this as an unpacked extension is sufficient in Chrome as it doesn't clear all unpacked extensions on quit.
     - Open Chrome and go to `chrome://extensions/`.
     - Enable **Developer mode** (toggle in the top right).
     - Click **Load unpacked** and select the directory containing this extension's files.
@@ -33,23 +34,23 @@ Follow these steps to get started with Desk365 Time Keeper:
     - Click **This Firefox** in the left sidebar.
     - Click **Load Temporary Add-on...** and select `build/firefox/manifest.json`.
 
-2.  **Configure Your Name**:
+3.  **Configure Your Name**:
     - Click the Desk365 Time Keeper icon in your browser toolbar.
     - Click the **Settings** (gear) icon in the top right of the popup.
     - In the **User Name** field, enter your name.
     - **IMPORTANT**: Your name **must match exactly** how it appears in Desk365 for the filtering to work correctly.
 
-3.  **Start Tracking**:
+4.  **Start Tracking**:
     - Navigate to any ticket on your Desk365 instance.
     - The extension will automatically detect and sync the time entries listed on the ticket.
     - Open the extension popup at any time to see your aggregated totals and entry history.
 
-4.  **Exporting Data**:
+5.  **Exporting Data**:
     - Open the extension popup and click the **Settings** (gear) icon.
     - Click the **Export to CSV** button.
     - A CSV file containing all your tracked time entries will be downloaded to your computer.
 
-5.  **Clearing Data**:
+6.  **Clearing Data**:
     - If you need to reset your local database, open the **Settings** view.
     - Click the **Clear All Data** button.
     - **Warning**: This action is permanent and will delete all locally stored time entries.
