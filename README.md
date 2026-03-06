@@ -23,6 +23,11 @@ Follow these steps to get started with Desk365 Time Keeper:
     - *Note: The root `manifest.json` is configured for Chrome by default.*
 
     ### Mozilla Firefox
+    #### For Regular Use (Recommended)
+    - Download the latest signed extension (`.xpi`) from the [Releases](https://github.com/gabrielupcott/time-keeper/releases) page.
+    - Drag and drop the `.xpi` file into Firefox to install it.
+
+    #### For Local Development/Debugging
     - Run `build.bat` (Windows) or `sh build.sh` (Mac/Linux) to generate the Firefox build folder.
     - Open Firefox and go to `about:debugging`.
     - Click **This Firefox** in the left sidebar.
