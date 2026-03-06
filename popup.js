@@ -1,12 +1,14 @@
+const browserAPI = typeof browser !== "undefined" ? browser : chrome;
+
 let currentViewDate = new Date();
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const { user_name = '' } = await chrome.storage.local.get('user_name');
+  const { user_name = '' } = await browserAPI.storage.local.get('user_name');
   const nameInput = document.getElementById('user-name');
   nameInput.value = user_name;
 
   nameInput.addEventListener('change', async () => {
-    await chrome.storage.local.set({ user_name: nameInput.value.trim() });
+    await browserAPI.storage.local.set({ user_name: nameInput.value.trim() });
     loadDashboard();
   });
 
@@ -46,7 +48,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Listen for storage changes to update the UI in real-time
-  chrome.storage.onChanged.addListener((changes, area) => {
+  browserAPI.storage.onChanged.addListener((changes, area) => {
     if (area === 'local' && changes.time_entries) {
       console.log('[TimeKeeper] Storage changed, reloading dashboard');
       loadDashboard();
@@ -55,7 +57,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function loadDashboard() {
-  const { time_entries = [], user_name = '' } = await chrome.storage.local.get(['time_entries', 'user_name']);
+  const { time_entries = [], user_name = '' } = await browserAPI.storage.local.get(['time_entries', 'user_name']);
   
   const now = new Date();
   const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -79,6 +81,16 @@ async function loadDashboard() {
     monthLabel.innerText = 'Month';
   }
   
+  // Show warning if name is not set
+  const nameWarning = document.getElementById('name-warning');
+  if (!user_name) {
+    console.log('[TimeKeeper] No user name set, showing warning');
+    nameWarning.classList.add('show');
+  } else {
+    console.log(`[TimeKeeper] User name set to: ${user_name}`);
+    nameWarning.classList.remove('show');
+  }
+
   // Filter entries by user name if provided
   const userFilteredEntries = user_name
     ? time_entries.filter(e => e.userName === user_name)
@@ -249,25 +261,23 @@ function isSameMonth(date1, date2) {
 }
 
 async function deleteEntry(id) {
-  const { time_entries = [] } = await chrome.storage.local.get('time_entries');
+  const { time_entries = [] } = await browserAPI.storage.local.get('time_entries');
   const filtered = time_entries.filter(e => e.id !== id);
-  await chrome.storage.local.set({ time_entries: filtered });
+  await browserAPI.storage.local.set({ time_entries: filtered });
   
   // Re-load dashboard with current view date preserved
   await loadDashboard();
-  chrome.runtime.sendMessage({ type: 'UPDATE_BADGE' });
 }
 
 async function clearAllData() {
   if (confirm('Are you sure you want to delete ALL time entries? This action cannot be undone.')) {
-    await chrome.storage.local.set({ time_entries: [] });
+    await browserAPI.storage.local.set({ time_entries: [] });
     await loadDashboard();
-    chrome.runtime.sendMessage({ type: 'UPDATE_BADGE' });
   }
 }
 
 async function exportCSV() {
-  const { time_entries = [] } = await chrome.storage.local.get('time_entries');
+  const { time_entries = [] } = await browserAPI.storage.local.get('time_entries');
   if (time_entries.length === 0) return alert('No data to export');
 
   const headers = ['Date', 'Ticket ID', 'Organization', 'Hours', 'Minutes', 'Total Decimal', 'Billable'];
