@@ -4,22 +4,26 @@ echo "Building Time Keeper extensions..."
 # Create build directory
 mkdir -p build
 
-# Create Firefox build
-echo "Creating Firefox build..."
-cp manifest.firefox.json manifest.json
-zip -r build/time-keeper-firefox.zip background.js content.js manifest.json popup.html popup.js icons README.md
+# Create Firefox build folder
+echo "Creating Firefox build folder..."
+mkdir -p build/firefox
+cp manifest.firefox.json build/firefox/manifest.json
+cp background.js content.js popup.html popup.js README.md build/firefox/
+cp -r icons build/firefox/
 
-# Create Chrome build
-echo "Creating Chrome build..."
-cp manifest.chrome.json manifest.json
-zip -r build/time-keeper-chrome.zip background.js content.js manifest.json popup.html popup.js icons README.md
+# Create Chrome build folder
+echo "Creating Chrome build folder..."
+mkdir -p build/chrome
+cp manifest.chrome.json build/chrome/manifest.json
+cp background.js content.js popup.html popup.js README.md build/chrome/
+cp -r icons build/chrome/
 
 # Restore Chrome manifest as default for local development/folder loading
 echo "Restoring Chrome manifest for local development..."
 cp manifest.chrome.json manifest.json
 
 echo ""
-echo "Done! "
-echo "- Firefox ZIP: build/time-keeper-firefox.zip"
-echo "- Chrome ZIP: build/time-keeper-chrome.zip"
-echo "- Local Folder: Ready for Chrome (manifest.json is now Chrome-compatible)"
+echo "Done!"
+echo "Build folders created in build/firefox and build/chrome"
+echo "NOTE: Please zip the contents of these folders manually if you need to upload them."
+echo "Automated zipping is disabled to prevent issues with icon transparency and metadata."

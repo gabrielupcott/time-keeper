@@ -12,7 +12,7 @@ let storageQueue = Promise.resolve();
 
 async function syncTimeEntries({ ticketId, entries }) {
   storageQueue = storageQueue.then(async () => {
-    console.log(`[TimeKeeper] Syncing ${entries.length} entries for ticket #${ticketId}`);
+    // console.log(`[TimeKeeper] Syncing ${entries.length} entries for ticket #${ticketId}`);
     const { time_entries = [] } = await browserAPI.storage.local.get('time_entries');
     
     // Remove all existing entries for this ticket
@@ -27,19 +27,19 @@ async function syncTimeEntries({ ticketId, entries }) {
 
     const updatedEntries = [...otherEntries, ...newEntries];
     await browserAPI.storage.local.set({ time_entries: updatedEntries });
-    console.log(`[TimeKeeper] Sync complete. Total entries: ${updatedEntries.length}`);
+    // console.log(`[TimeKeeper] Sync complete. Total entries: ${updatedEntries.length}`);
   });
   await storageQueue;
 }
 
 async function saveTimeEntry(entry) {
   storageQueue = storageQueue.then(async () => {
-    console.log('[TimeKeeper] Processing save for entry:', entry);
+    // console.log('[TimeKeeper] Processing save for entry:', entry);
     const { time_entries = [], user_name = '' } = await browserAPI.storage.local.get(['time_entries', 'user_name']);
     
     // If a user name is set, only save entries that match that name
     if (user_name && entry.userName && entry.userName.toLowerCase() !== user_name.toLowerCase()) {
-      console.log(`[TimeKeeper] Ignoring save for user: ${entry.userName} (Expected: ${user_name})`);
+      // console.log(`[TimeKeeper] Ignoring save for user: ${entry.userName} (Expected: ${user_name})`);
       return;
     }
 
@@ -51,7 +51,7 @@ async function saveTimeEntry(entry) {
 
     time_entries.push(newEntry);
     await browserAPI.storage.local.set({ time_entries });
-    console.log('[TimeKeeper] Entry saved. Total entries:', time_entries.length);
+    // console.log('[TimeKeeper] Entry saved. Total entries:', time_entries.length);
   });
   
   await storageQueue;
@@ -71,14 +71,14 @@ async function updateBadge() {
   const todayEntries = time_entries.filter(e => e.date === todayISO || e.date === todayISOAlt);
   const todayMinutes = todayEntries.reduce((sum, e) => {
     const mins = (parseInt(e.hours || 0, 10) * 60) + parseInt(e.minutes || 0, 10);
-    console.log(`[TimeKeeper] Entry: ${e.hours}h ${e.minutes}m -> ${mins} mins (Ticket: ${e.ticketId})`);
+    // console.log(`[TimeKeeper] Entry: ${e.hours}h ${e.minutes}m -> ${mins} mins (Ticket: ${e.ticketId})`);
     return sum + mins;
   }, 0);
 
-  console.log(`[TimeKeeper] Total minutes for ${todayISO}: ${todayMinutes}`);
+  // console.log(`[TimeKeeper] Total minutes for ${todayISO}: ${todayMinutes}`);
 
   const badgeText = todayMinutes > 0 ? `${todayMinutes}m` : '';
-  console.log('[TimeKeeper] Setting badge text to:', badgeText);
+  // console.log('[TimeKeeper] Setting badge text to:', badgeText);
   
   const browserAction = browserAPI.action ?? browserAPI.browserAction;
 

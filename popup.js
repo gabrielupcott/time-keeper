@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Listen for storage changes to update the UI in real-time
   browserAPI.storage.onChanged.addListener((changes, area) => {
     if (area === 'local' && changes.time_entries) {
-      console.log('[TimeKeeper] Storage changed, reloading dashboard');
+      // console.log('[TimeKeeper] Storage changed, reloading dashboard');
       loadDashboard();
     }
   });
@@ -84,10 +84,10 @@ async function loadDashboard() {
   // Show warning if name is not set
   const nameWarning = document.getElementById('name-warning');
   if (!user_name) {
-    console.log('[TimeKeeper] No user name set, showing warning');
+    // console.log('[TimeKeeper] No user name set, showing warning');
     nameWarning.classList.add('show');
   } else {
-    console.log(`[TimeKeeper] User name set to: ${user_name}`);
+    // console.log(`[TimeKeeper] User name set to: ${user_name}`);
     nameWarning.classList.remove('show');
   }
 
@@ -148,14 +148,16 @@ function renderGroupedList(groupedData) {
     const orgHeader = document.createElement('div');
     orgHeader.className = 'dropdown-header operator-header';
     orgHeader.innerHTML = `
-      <span>${orgName}</span>
+      <span class="org-name"></span>
       <div style="display: flex; align-items: center; gap: 8px;">
-        <span class="total-badge">${orgTotalFormatted}</span>
+        <span class="total-badge"></span>
         <span class="chevron">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </span>
       </div>
     `;
+    orgHeader.querySelector('.org-name').textContent = orgName;
+    orgHeader.querySelector('.total-badge').textContent = orgTotalFormatted;
     
     const orgContent = document.createElement('div');
     orgContent.className = 'dropdown-content';
@@ -172,14 +174,16 @@ function renderGroupedList(groupedData) {
       const ticketHeader = document.createElement('div');
       ticketHeader.className = 'dropdown-header ticket-header';
       ticketHeader.innerHTML = `
-        <span>Ticket #${ticketId}</span>
+        <span class="ticket-label"></span>
         <div style="display: flex; align-items: center; gap: 8px;">
-          <span class="total-badge">${ticketTotalFormatted}</span>
+          <span class="total-badge"></span>
           <span class="chevron">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
           </span>
         </div>
       `;
+      ticketHeader.querySelector('.ticket-label').textContent = `Ticket #${ticketId}`;
+      ticketHeader.querySelector('.total-badge').textContent = ticketTotalFormatted;
       
       const ticketContent = document.createElement('div');
       ticketContent.className = 'dropdown-content';
@@ -190,12 +194,14 @@ function renderGroupedList(groupedData) {
         entryItem.className = 'entry-item';
         entryItem.innerHTML = `
           <div class="entry-info">
-            <div class="entry-meta">${entry.date} - ${entry.hours}h ${entry.minutes}m</div>
+            <div class="entry-meta"></div>
           </div>
           <div class="actions">
-            <button class="btn btn-delete" data-id="${entry.id}">Del</button>
+            <button class="btn btn-delete">Del</button>
           </div>
         `;
+        entryItem.querySelector('.entry-meta').textContent = `${entry.date} - ${entry.hours}h ${entry.minutes}m`;
+        entryItem.querySelector('.btn-delete').setAttribute('data-id', entry.id);
         
         entryItem.querySelector('.btn-delete').addEventListener('click', (e) => {
           e.stopPropagation();

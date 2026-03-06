@@ -93,15 +93,15 @@ function getOrganization() {
 
   if (operatorFromField && operatorFromField !== "--") {
     if (companyFromContactInfo && operatorFromField !== companyFromContactInfo) {
-      console.log(`[TimeKeeper] Operator mismatch! Field: "${operatorFromField}", Contact Info: "${companyFromContactInfo}". Using Field.`);
+      // console.log(`[TimeKeeper] Operator mismatch! Field: "${operatorFromField}", Contact Info: "${companyFromContactInfo}". Using Field.`);
     } else {
-      console.log(`[TimeKeeper] Operator detected from field: ${operatorFromField}`);
+      // console.log(`[TimeKeeper] Operator detected from field: ${operatorFromField}`);
     }
     return operatorFromField;
   }
 
   if (companyFromContactInfo) {
-    console.log(`[TimeKeeper] Company detected from contact info: ${companyFromContactInfo}`);
+    // console.log(`[TimeKeeper] Company detected from contact info: ${companyFromContactInfo}`);
     return companyFromContactInfo;
   }
 
@@ -115,7 +115,7 @@ function handlePageChange() {
   const currentOrganization = getOrganization();
 
   if (ticketId !== lastKnownTicketId) {
-    console.log(`[TimeKeeper] Switched to ticket #${ticketId}`);
+    // console.log(`[TimeKeeper] Switched to ticket #${ticketId}`);
     lastKnownTicketId = ticketId;
     lastKnownTimeEntries = null;
     lastKnownOrganization = currentOrganization;
@@ -124,7 +124,7 @@ function handlePageChange() {
   // Detect if organization changed (even if not from Unknown)
   const organizationUpdated = currentOrganization !== lastKnownOrganization;
   if (organizationUpdated) {
-    console.log(`[TimeKeeper] Organization updated: ${lastKnownOrganization} -> ${currentOrganization}. Updating entries.`);
+    // console.log(`[TimeKeeper] Organization updated: ${lastKnownOrganization} -> ${currentOrganization}. Updating entries.`);
     lastKnownOrganization = currentOrganization;
     // Reset lastKnownTimeEntries to force a re-sync with the new organization name
     lastKnownTimeEntries = null;
@@ -176,7 +176,7 @@ async function checkForNewTimeEntries(ticketId, section) {
   if (currentEntriesData === lastKnownTimeEntries) return;
   lastKnownTimeEntries = currentEntriesData;
 
-  console.log(`[TimeKeeper] Syncing ${entryElements.length} entries for ticket #${ticketId}`);
+  // console.log(`[TimeKeeper] Syncing ${entryElements.length} entries for ticket #${ticketId}`);
   
   const organization = getOrganization();
   const now = new Date();
@@ -189,7 +189,7 @@ async function checkForNewTimeEntries(ticketId, section) {
 
     // If a user name is set in the extension, only sync entries that match that name
     if (user_name && userName && userName.toLowerCase() !== user_name.toLowerCase()) {
-      console.log(`[TimeKeeper] Skipping entry for user: ${userName} (Expected: ${user_name})`);
+      // console.log(`[TimeKeeper] Skipping entry for user: ${userName} (Expected: ${user_name})`);
       return null;
     }
     
@@ -208,7 +208,7 @@ async function checkForNewTimeEntries(ticketId, section) {
     if (timeMatch) {
       const hours = parseInt(timeMatch[1], 10);
       const minutes = parseInt(timeMatch[2], 10);
-      console.log(`[TimeKeeper] Detected time entry: ${hours}h ${minutes}m for date: ${dateText || 'Today'} (Syncing as: ${entryDate})`);
+      // console.log(`[TimeKeeper] Detected time entry: ${hours}h ${minutes}m for date: ${dateText || 'Today'} (Syncing as: ${entryDate})`);
       
       return {
         ticketId: ticketId,
@@ -243,7 +243,7 @@ function setupDialogListener(dialog) {
   if (!saveButton || saveButton.dataset.timekeeperTracked) return;
 
   saveButton.dataset.timekeeperTracked = "true";
-  console.log('[TimeKeeper] Save button listener attached');
+  // console.log('[TimeKeeper] Save button listener attached');
 
   saveButton.addEventListener('click', () => {
     // When the user clicks save, we wait for the page to update and then sync the whole list.

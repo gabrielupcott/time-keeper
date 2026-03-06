@@ -14,7 +14,6 @@ copy /y content.js build\chrome\ >nul
 copy /y popup.js build\chrome\ >nul
 copy /y popup.html build\chrome\ >nul
 xcopy /s /e /i icons build\chrome\icons >nul
-powershell -Command "Compress-Archive -Path build\chrome\* -DestinationPath build\time-keeper-chrome.zip -Force"
 
 :: Build Firefox version (MV2)
 echo Building Firefox (MV2)...
@@ -25,7 +24,6 @@ copy /y content.js build\firefox\ >nul
 copy /y popup.js build\firefox\ >nul
 copy /y popup.html build\firefox\ >nul
 xcopy /s /e /i icons build\firefox\icons >nul
-powershell -Command "Compress-Archive -Path build\firefox\* -DestinationPath build\time-keeper-firefox.zip -Force"
 
 :: Restore unified manifest for development
 copy /y manifest.chrome.json manifest.json >nul
@@ -33,4 +31,6 @@ copy /y manifest.chrome.json manifest.json >nul
 echo Done!
 echo Chrome build in: build\chrome
 echo Firefox build in: build\firefox
-echo Zips created in build folder: time-keeper-chrome.zip, time-keeper-firefox.zip
+echo.
+echo NOTE: Please zip the contents of these folders manually if you need to upload them.
+echo Automated zipping is disabled to prevent issues with icon transparency and metadata.
