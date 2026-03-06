@@ -33,13 +33,6 @@ Follow these steps to get started with Desk365 Time Keeper:
     - Click **This Firefox** in the left sidebar.
     - Click **Load Temporary Add-on...** and select `build/firefox/manifest.json`.
 
-    ### Packaging for Store Submission
-    If you need to create a `.zip` file for submission to the Chrome Web Store or Firefox Add-ons site:
-    1. Run the build script (`build.bat` or `build.sh`).
-    2. Navigate to the `build/chrome` or `build/firefox` directory.
-    3. Select all files **inside** that folder and zip them manually.
-    - *Note: Automated zipping is disabled to ensure icon transparency and metadata are preserved correctly.*
-
 2.  **Configure Your Name**:
     - Click the Desk365 Time Keeper icon in your browser toolbar.
     - Click the **Settings** (gear) icon in the top right of the popup.
