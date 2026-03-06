@@ -11,6 +11,8 @@ Desktop.ini
 
 # Build output
 dist/
+build/
+manifest.json
 *.zip
 
 # Local environment files

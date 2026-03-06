@@ -1,22 +1,36 @@
 @echo off
-echo Building Time Keeper extensions...
+echo Building extensions...
 
-:: Create Firefox build
-echo Creating Firefox build...
-copy manifest.firefox.json manifest.json /Y
-powershell -Command "Compress-Archive -Path background.js, content.js, manifest.json, popup.html, popup.js, icons, README.md -DestinationPath time-keeper-firefox.zip -Force"
+:: Create build directory
+if exist build rd /s /q build
+mkdir build
 
-:: Create Chrome build
-echo Creating Chrome build...
-copy manifest.chrome.json manifest.json /Y
-powershell -Command "Compress-Archive -Path background.js, content.js, manifest.json, popup.html, popup.js, icons, README.md -DestinationPath time-keeper-chrome.zip -Force"
+:: Build Chrome version (MV3)
+echo Building Chrome (MV3)...
+mkdir build\chrome
+copy /y manifest.chrome.json build\chrome\manifest.json >nul
+copy /y background.js build\chrome\ >nul
+copy /y content.js build\chrome\ >nul
+copy /y popup.js build\chrome\ >nul
+copy /y popup.html build\chrome\ >nul
+xcopy /s /e /i icons build\chrome\icons >nul
+powershell -Command "Compress-Archive -Path build\chrome\* -DestinationPath build\time-keeper-chrome.zip -Force"
 
-:: Restore Chrome manifest as default for local development/folder loading
-echo Restoring Chrome manifest for local development...
-copy manifest.chrome.json manifest.json /Y
+:: Build Firefox version (MV2)
+echo Building Firefox (MV2)...
+mkdir build\firefox
+copy /y manifest.firefox.json build\firefox\manifest.json >nul
+copy /y background.js build\firefox\ >nul
+copy /y content.js build\firefox\ >nul
+copy /y popup.js build\firefox\ >nul
+copy /y popup.html build\firefox\ >nul
+xcopy /s /e /i icons build\firefox\icons >nul
+powershell -Command "Compress-Archive -Path build\firefox\* -DestinationPath build\time-keeper-firefox.zip -Force"
 
-echo.
-echo Done! 
-echo - Firefox ZIP: time-keeper-firefox.zip
-echo - Chrome ZIP: time-keeper-chrome.zip
-echo - Local Folder: Ready for Chrome (manifest.json is now Chrome-compatible)
+:: Restore unified manifest for development
+copy /y manifest.chrome.json manifest.json >nul
+
+echo Done!
+echo Chrome build in: build\chrome
+echo Firefox build in: build\firefox
+echo Zips created in build folder: time-keeper-chrome.zip, time-keeper-firefox.zip

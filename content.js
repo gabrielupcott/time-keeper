@@ -1,3 +1,5 @@
+const browserAPI = typeof browser !== "undefined" ? browser : chrome;
+
 const observer = new MutationObserver((mutations) => {
   handlePageChange();
 });
@@ -156,7 +158,7 @@ function findTimeEntriesSection() {
 
 async function checkForNewTimeEntries(ticketId, section) {
   // Get the user name from storage to filter entries
-  const { user_name = '' } = await chrome.storage.local.get('user_name');
+  const { user_name = '' } = await browserAPI.storage.local.get('user_name');
   
   // Based on the provided HTML, each entry is an <app-gp-timer>
   const entryElements = document.querySelectorAll('app-gp-timer');
@@ -222,8 +224,8 @@ async function checkForNewTimeEntries(ticketId, section) {
     return null;
   }).filter(e => e !== null);
 
-  if (chrome.runtime?.id) {
-    chrome.runtime.sendMessage({
+  if (browserAPI.runtime?.id) {
+    browserAPI.runtime.sendMessage({
       type: 'SYNC_TIME_ENTRIES',
       data: {
         ticketId: ticketId,

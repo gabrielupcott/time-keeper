@@ -20,9 +20,10 @@ A Chrome extension designed to track billable time entries submitted via the Des
 
 ### 2. Background Service Worker
 - **Responsibility**: Acts as the central data controller and manages the extension badge.
+- **Cross-Browser Support**: Uses `browserAPI` abstraction to support both Chrome (`chrome.*`) and Firefox (`browser.*`).
 - **Data Management**:
     - Receives `SYNC_TIME_ENTRIES` and `SAVE_TIME_ENTRY` messages.
-    - Manages `chrome.storage.local` with a promise-based queue to prevent race conditions.
+    - Manages `browserAPI.storage.local` with a promise-based queue to prevent race conditions.
     - **Sync Logic**: When syncing a ticket, it replaces all existing local entries for that specific `ticketId` with the fresh data from the page.
 - **Badge Management**:
     - Calculates the total for "Today" and updates the extension badge text (e.g., "2.5h").
@@ -43,7 +44,7 @@ A Chrome extension designed to track billable time entries submitted via the Des
     - **CSV Export**: Generates a CSV file including Date, Ticket ID, Organization, Hours, Minutes, and Billable status.
 - **Tech**: Vanilla HTML/CSS/JS.
 
-## Data Schema (chrome.storage.local)
+## Data Schema (browserAPI.storage.local)
 
 ```json
 {
@@ -70,9 +71,9 @@ A Chrome extension designed to track billable time entries submitted via the Des
 graph TD
     A[Desk365 Ticket Page] -->|MutationObserver| B(Content Script)
     B -->|Scrape app-gp-timer| D[Extract Hours/Mins/Date/Ticket]
-    D -->|chrome.runtime.sendMessage| E[Background Service Worker]
-    E -->|Replace entries for TicketID| F[(chrome.storage.local)]
-    E -->|Update Badge| G[Chrome Toolbar Badge]
+    D -->|browserAPI.runtime.sendMessage| E[Background Service Worker]
+    E -->|Replace entries for TicketID| F[(browserAPI.storage.local)]
+    E -->|Update Badge| G[Browser Toolbar Badge]
     
     H[User Clicks Extension] --> I[Popup Dashboard]
     I -->|Query & Filter| F
@@ -83,6 +84,6 @@ graph TD
 `Date, Ticket ID, Organization, Hours, Minutes, Total Decimal, Billable`
 
 ## Constraints & Security
-- **No External Hosting**: All data stays in `chrome.storage.local`.
+- **No External Hosting**: All data stays in `browserAPI.storage.local`.
 - **Privacy**: Only interacts with Desk365 domains specified in `manifest.json`.
 - **Reliability**: Uses a sync-based approach rather than just intercepting clicks to ensure data consistency even if entries are added/removed outside the extension's view.

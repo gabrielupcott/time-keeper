@@ -1,41 +1,47 @@
 {
-  "manifest_version": 3,
+  "manifest_version": 2,
   "name": "Desk365 Time Keeper",
   "version": "1.0",
   "description": "Tracks billable time entries on Desk365 tickets locally.",
+
   "permissions": [
     "storage",
-    "tabs"
-  ],
-  "host_permissions": [
+    "tabs",
     "https://*.desk365.io/*"
   ],
+
   "background": {
-    "scripts": ["background.js"]
+    "scripts": ["background.js"],
+    "persistent": false
   },
+
   "content_scripts": [
     {
       "matches": ["https://*.desk365.io/*"],
       "js": ["content.js"]
     }
   ],
-  "action": {
+
+  "browser_action": {
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     }
   },
+
   "icons": {
     "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
+
   "browser_specific_settings": {
     "gecko": {
-      "id": "time-keeper@yourdomain.com",
-      "strict_min_version": "109.0"
+      "id": "time-keeper@yourdomain.com"
     }
   }
 }
