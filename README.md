@@ -15,9 +15,18 @@ Desk365 Time Keeper is a Chrome Extension designed to help users track their bil
 Follow these steps to get started with Desk365 Time Keeper:
 
 1.  **Install the Extension**:
+
+    ### Google Chrome
     - Open Chrome and go to `chrome://extensions/`.
     - Enable **Developer mode** (toggle in the top right).
     - Click **Load unpacked** and select the directory containing this extension's files.
+    - *Note: The root `manifest.json` is configured for Chrome by default.*
+
+    ### Mozilla Firefox
+    - Run `build.bat` (Windows) or `sh build.sh` (Mac/Linux) to generate the Firefox build.
+    - Open Firefox and go to `about:debugging`.
+    - Click **This Firefox** in the left sidebar.
+    - Click **Load Temporary Add-on...** and select `time-keeper-firefox.zip`.
 
 2.  **Configure Your Name**:
     - Click the Desk365 Time Keeper icon in your browser toolbar.

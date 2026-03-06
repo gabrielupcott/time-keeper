@@ -58,8 +58,8 @@ async function loadDashboard() {
   const { time_entries = [], user_name = '' } = await chrome.storage.local.get(['time_entries', 'user_name']);
   
   const now = new Date();
-  const todayStr = now.toISOString().split('T')[0];
-  const viewDateStr = currentViewDate.toISOString().split('T')[0];
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const viewDateStr = `${currentViewDate.getFullYear()}-${String(currentViewDate.getMonth() + 1).padStart(2, '0')}-${String(currentViewDate.getDate()).padStart(2, '0')}`;
   
   // Update date display and labels
   const dateDisplay = document.getElementById('current-date-display');
