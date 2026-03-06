@@ -26,7 +26,7 @@ Follow these steps to get started with Desk365 Time Keeper:
     - Run `build.bat` (Windows) or `sh build.sh` (Mac/Linux) to generate the Firefox build.
     - Open Firefox and go to `about:debugging`.
     - Click **This Firefox** in the left sidebar.
-    - Click **Load Temporary Add-on...** and select `build/time-keeper-firefox.zip`.
+    - Click **Load Temporary Add-on...** and select `build/firefox/manifest.json`.
 
 2.  **Configure Your Name**:
     - Click the Desk365 Time Keeper icon in your browser toolbar.

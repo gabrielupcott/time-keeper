@@ -27,8 +27,10 @@ A build script (`build.bat` or `build.sh`) automates the creation of browser-spe
 4.  Restores the default `manifest.json` for local development.
 
 ## Build Artifacts
-- `build/time-keeper-chrome.zip`: Ready for Chrome Web Store.
-- `build/time-keeper-firefox.zip`: Ready for Firefox Add-ons (AMO).
+- `build/chrome/`: Staging directory for Chrome. Contains only the files required for the extension, excluding development tools and documentation.
+- `build/firefox/`: Staging directory for Firefox.
+- `build/time-keeper-chrome.zip`: Production-ready package for the Chrome Web Store.
+- `build/time-keeper-firefox.zip`: Production-ready package for Firefox Add-ons (AMO).
 
 ## Development Workflow
 - **Chrome**: Load the root directory as an "Unpacked Extension".
