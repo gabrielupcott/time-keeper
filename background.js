@@ -65,8 +65,8 @@ async function updateBadge() {
   const { time_entries = [] } = await chrome.storage.local.get('time_entries');
   
   // Use local date string to match the date format stored by content script
-  const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD in many locales, but let's be safer
-  const todayISO = new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const todayISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   
   console.log('[TimeKeeper] Updating badge. Today is:', todayISO);
 
@@ -79,7 +79,10 @@ async function updateBadge() {
 
   console.log(`[TimeKeeper] Total minutes for ${todayISO}: ${todayMinutes}`);
 
-  chrome.action.setBadgeText({ text: todayMinutes > 0 ? `${todayMinutes}m` : '' });
+  const badgeText = todayMinutes > 0 ? `${todayMinutes}m` : '';
+  console.log('[TimeKeeper] Setting badge text to:', badgeText);
+  
+  chrome.action.setBadgeText({ text: badgeText });
 
   let badgeColor = '#4CAF50'; // Green (default)
   if (todayMinutes > 60) {
