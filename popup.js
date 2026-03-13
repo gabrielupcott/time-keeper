@@ -174,7 +174,12 @@ function renderGroupedList(groupedData) {
       const ticketHeader = document.createElement('div');
       ticketHeader.className = 'dropdown-header ticket-header';
       ticketHeader.innerHTML = `
-        <span class="ticket-label"></span>
+        <div style="display: flex; align-items: center;">
+          <a class="ticket-link" target="_blank">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+          </a>
+          <span class="ticket-label"></span>
+        </div>
         <div style="display: flex; align-items: center; gap: 8px;">
           <span class="total-badge"></span>
           <span class="chevron">
@@ -182,7 +187,17 @@ function renderGroupedList(groupedData) {
           </span>
         </div>
       `;
-      ticketHeader.querySelector('.ticket-label').textContent = `Ticket #${ticketId}`;
+      
+      const ticketLabel = ticketHeader.querySelector('.ticket-label');
+      ticketLabel.textContent = `Ticket #${ticketId}`;
+      
+      const ticketLink = ticketHeader.querySelector('.ticket-link');
+      if (ticketId && ticketId !== 'No Ticket') {
+        ticketLink.href = `https://tv2consulting.desk365.io/app/tickets/ticketdetails?view=indVw&tktNum=${ticketId}`;
+        ticketLink.addEventListener('click', (e) => e.stopPropagation());
+      } else {
+        ticketLink.style.display = 'none';
+      }
       ticketHeader.querySelector('.total-badge').textContent = ticketTotalFormatted;
       
       const ticketContent = document.createElement('div');
