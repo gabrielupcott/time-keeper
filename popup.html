@@ -172,6 +172,29 @@
       width: 100%;
       margin-top: 15px;
     }
+    .btn-import {
+      background: #4caf50;
+      color: white;
+      width: 100%;
+      margin-top: 8px;
+    }
+    .import-status {
+      font-size: 11px;
+      margin-top: 6px;
+      padding: 6px 10px;
+      border-radius: 4px;
+      display: none;
+    }
+    .import-status.success {
+      display: block;
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+    .import-status.error {
+      display: block;
+      background: #ffebee;
+      color: #c62828;
+    }
     .btn-delete {
       background: #ff5252;
       color: white;
@@ -300,6 +323,9 @@
     <div class="settings-group">
       <label class="settings-label">Data Management</label>
       <button id="export-csv" class="btn btn-export" style="margin-top: 0;">Export to CSV</button>
+      <button id="import-csv" class="btn btn-import">Import from CSV</button>
+      <input type="file" id="import-csv-file" accept=".csv" style="display: none;">
+      <div id="import-status" class="import-status"></div>
       <button id="clear-all" class="btn btn-clear">Clear All Data</button>
     </div>
   </div>

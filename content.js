@@ -1,7 +1,15 @@
 const browserAPI = typeof browser !== "undefined" ? browser : chrome;
 
+// Debounce handlePageChange to avoid flooding syncs on rapid DOM mutations (e.g. ticking timers)
+let debounceTimer = null;
+const DEBOUNCE_DELAY = 1000; // 1 second
+
 const observer = new MutationObserver((mutations) => {
-  handlePageChange();
+  if (debounceTimer) clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    handlePageChange();
+    debounceTimer = null;
+  }, DEBOUNCE_DELAY);
 });
 
 observer.observe(document.body, { childList: true, subtree: true });
@@ -166,10 +174,11 @@ async function checkForNewTimeEntries(ticketId, section) {
   // Create a unique string representing the current state of all entries to avoid redundant syncs
   const currentEntriesData = Array.from(entryElements)
     .map((el) => {
-      const timeText = el.querySelector('div[style*="font-size: 14px;"]')?.innerText.trim() || "";
+      const timeText = el.querySelector('.gp-timer-elapsed')?.innerText.trim() || "";
       const dateText = el.querySelector('span[style*="color: var(--gp-neutral-white-700);"]')?.innerText.trim() || "";
       const userName = el.querySelector('a')?.innerText.trim() || "";
-      return `${timeText}|${dateText}|${userName}`;
+      const billable = el.querySelector('.billable-tag') ? "true" : "false";
+      return `${timeText}|${dateText}|${userName}|${billable}`;
     })
     .join('||');
 
@@ -183,9 +192,10 @@ async function checkForNewTimeEntries(ticketId, section) {
   const todayISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
   const entriesToSync = Array.from(entryElements).map(el => {
-    const timeText = el.querySelector('div[style*="font-size: 14px;"]')?.innerText.trim() || "";
+    const timeText = el.querySelector('.gp-timer-elapsed')?.innerText.trim() || "";
     const dateText = el.querySelector('span[style*="color: var(--gp-neutral-white-700);"]')?.innerText.trim() || "";
     const userName = el.querySelector('a')?.innerText.trim() || "";
+    const isBillable = el.querySelector('.billable-tag') !== null;
 
     // If a user name is set in the extension, only sync entries that match that name
     if (user_name && userName && userName.toLowerCase() !== user_name.toLowerCase()) {
@@ -204,18 +214,20 @@ async function checkForNewTimeEntries(ticketId, section) {
       }
     }
 
-    const timeMatch = timeText.match(/(\d+)h\s*:\s*(\d+)m/);
+    const timeMatch = timeText.match(/(\d+)h\s*:\s*(\d+)m\s*:\s*(\d+)s/);
     if (timeMatch) {
       const hours = parseInt(timeMatch[1], 10);
       const minutes = parseInt(timeMatch[2], 10);
-      // console.log(`[TimeKeeper] Detected time entry: ${hours}h ${minutes}m for date: ${dateText || 'Today'} (Syncing as: ${entryDate})`);
+      const seconds = parseInt(timeMatch[3], 10);
+      // console.log(`[TimeKeeper] Detected time entry: ${hours}h ${minutes}m ${seconds}s for date: ${dateText || 'Today'} (Syncing as: ${entryDate})`);
       
       return {
         ticketId: ticketId,
         hours: hours,
         minutes: minutes,
+        seconds: seconds,
         date: entryDate,
-        billable: true,
+        billable: isBillable,
         organization: organization,
         userName: userName,
         source: 'list_sync'

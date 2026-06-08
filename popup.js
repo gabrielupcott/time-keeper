@@ -13,7 +13,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   await loadDashboard();
+  // Re-read after a short delay to catch up with any in-flight queue writes from background.js
+  setTimeout(() => loadDashboard(), 500);
   document.getElementById('export-csv').addEventListener('click', exportCSV);
+  document.getElementById('import-csv').addEventListener('click', () => document.getElementById('import-csv-file').click());
+  document.getElementById('import-csv-file').addEventListener('change', importCSV);
   document.getElementById('clear-all').addEventListener('click', clearAllData);
   
   document.getElementById('prev-day').addEventListener('click', () => {
@@ -121,7 +125,7 @@ async function loadDashboard() {
       groupedData[org].tickets[ticket] = { entries: [], totalMinutes: 0 };
     }
     
-    const entryMins = (parseInt(entry.hours || 0) * 60) + parseInt(entry.minutes || 0);
+    const entryMins = (parseInt(entry.hours || 0) * 60) + parseInt(entry.minutes || 0) + (parseInt(entry.seconds || 0) / 60);
     groupedData[org].totalMinutes += entryMins;
     groupedData[org].tickets[ticket].totalMinutes += entryMins;
     groupedData[org].tickets[ticket].entries.push(entry);
@@ -215,7 +219,8 @@ function renderGroupedList(groupedData) {
             <button class="btn btn-delete">Del</button>
           </div>
         `;
-        entryItem.querySelector('.entry-meta').textContent = `${entry.date} - ${entry.hours}h ${entry.minutes}m`;
+        const secondsPart = entry.seconds ? ` ${entry.seconds}s` : '';
+        entryItem.querySelector('.entry-meta').textContent = `${entry.date} - ${entry.hours}h ${entry.minutes}m${secondsPart}`;
         entryItem.querySelector('.btn-delete').setAttribute('data-id', entry.id);
         
         entryItem.querySelector('.btn-delete').addEventListener('click', (e) => {
@@ -248,12 +253,12 @@ function renderGroupedList(groupedData) {
 }
 
 function sumMinutes(entries) {
-  return entries.reduce((sum, e) => sum + (parseInt(e.hours || 0) * 60) + parseInt(e.minutes || 0), 0);
+  return entries.reduce((sum, e) => sum + (parseInt(e.hours || 0) * 60) + parseInt(e.minutes || 0) + (parseInt(e.seconds || 0) / 60), 0);
 }
 
 function formatTime(totalMinutes) {
   const h = Math.floor(totalMinutes / 60);
-  const m = totalMinutes % 60;
+  const m = Math.round(totalMinutes % 60);
   if (h > 0) {
     return `${h}h ${m}m`;
   }
@@ -301,15 +306,17 @@ async function exportCSV() {
   const { time_entries = [] } = await browserAPI.storage.local.get('time_entries');
   if (time_entries.length === 0) return alert('No data to export');
 
-  const headers = ['Date', 'Ticket ID', 'Organization', 'Hours', 'Minutes', 'Total Decimal', 'Billable'];
+  const headers = ['Date', 'Ticket ID', 'Organization', 'Hours', 'Minutes', 'Seconds', 'Total Decimal', 'Billable', 'UserName'];
   const rows = time_entries.map(e => [
     e.date,
     e.ticketId || '',
     `"${e.organization}"`,
     e.hours,
     e.minutes,
-    (parseInt(e.hours || 0) + parseInt(e.minutes || 0) / 60).toFixed(2),
-    e.billable
+    e.seconds || 0,
+    (parseInt(e.hours || 0) + parseInt(e.minutes || 0) / 60 + parseInt(e.seconds || 0) / 3600).toFixed(2),
+    e.billable,
+    `"${e.userName || ''}"`
   ]);
 
   const csvContent = [headers, ...rows].map(r => r.join(',')).join('\n');
@@ -320,4 +327,147 @@ async function exportCSV() {
   a.href = url;
   a.download = `desk365-time-export-${new Date().toISOString().split('T')[0]}.csv`;
   a.click();
+}
+
+async function importCSV(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const statusEl = document.getElementById('import-status');
+  statusEl.className = 'import-status';
+  statusEl.textContent = '';
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const text = e.target.result;
+      const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
+      
+      if (lines.length < 2) {
+        throw new Error('CSV file is empty or has no data rows.');
+      }
+
+      // Parse header row
+      const headerLine = lines[0];
+      const headers = parseCSVLine(headerLine).map(h => h.trim().toLowerCase());
+
+      // Map header names to indices (support both old and new export formats)
+      const colIndex = {};
+      headers.forEach((h, i) => {
+        if (h === 'date') colIndex.date = i;
+        else if (h === 'ticket id') colIndex.ticketId = i;
+        else if (h === 'organization') colIndex.organization = i;
+        else if (h === 'hours') colIndex.hours = i;
+        else if (h === 'minutes') colIndex.minutes = i;
+        else if (h === 'seconds') colIndex.seconds = i;
+        else if (h === 'total decimal') colIndex.totalDecimal = i;
+        else if (h === 'billable') colIndex.billable = i;
+        else if (h === 'username') colIndex.userName = i;
+      });
+
+      // Validate required columns
+      if (colIndex.date === undefined || colIndex.hours === undefined || colIndex.minutes === undefined) {
+        throw new Error('CSV is missing required columns (Date, Hours, Minutes).');
+      }
+
+      const { time_entries = [], user_name = '' } = await browserAPI.storage.local.get(['time_entries', 'user_name']);
+
+      // Build a set of existing entry signatures to avoid duplicates
+      const existingSignatures = new Set();
+      time_entries.forEach(e => {
+        existingSignatures.add(`${e.date}|${e.ticketId || ''}|${e.organization}|${e.hours}|${e.minutes}|${e.seconds || 0}|${e.billable}|${e.userName || ''}`);
+      });
+
+      let imported = 0;
+      let skipped = 0;
+
+      for (let i = 1; i < lines.length; i++) {
+        const cols = parseCSVLine(lines[i]);
+        
+        const date = (cols[colIndex.date] || '').trim();
+        const ticketId = (cols[colIndex.ticketId] || '').trim();
+        const organization = (cols[colIndex.organization] || 'Unknown').trim();
+        const hours = parseInt(cols[colIndex.hours] || '0', 10);
+        const minutes = parseInt(cols[colIndex.minutes] || '0', 10);
+        const seconds = parseInt(cols[colIndex.seconds] || '0', 10);
+        const billable = (cols[colIndex.billable] || 'false').trim().toLowerCase() === 'true';
+        const userName = (cols[colIndex.userName] || user_name || '').trim();
+
+        if (!date) continue;
+
+        // Check for duplicate
+        const signature = `${date}|${ticketId}|${organization}|${hours}|${minutes}|${seconds}|${billable}|${userName}`;
+        if (existingSignatures.has(signature)) {
+          skipped++;
+          continue;
+        }
+        existingSignatures.add(signature);
+
+        const newEntry = {
+          id: crypto.randomUUID(),
+          timestamp: Date.now(),
+          date,
+          ticketId,
+          organization,
+          hours,
+          minutes,
+          seconds,
+          billable,
+          userName,
+          source: 'csv_import'
+        };
+
+        time_entries.push(newEntry);
+        imported++;
+      }
+
+      await browserAPI.storage.local.set({ time_entries });
+      await loadDashboard();
+
+      statusEl.className = 'import-status success';
+      statusEl.textContent = `Imported ${imported} entries.${skipped > 0 ? ` Skipped ${skipped} duplicate(s).` : ''}`;
+    } catch (err) {
+      statusEl.className = 'import-status error';
+      statusEl.textContent = `Import failed: ${err.message}`;
+    }
+  };
+
+  reader.onerror = () => {
+    statusEl.className = 'import-status error';
+    statusEl.textContent = 'Failed to read file.';
+  };
+
+  reader.readAsText(file);
+  // Reset the file input so the same file can be re-imported if needed
+  event.target.value = '';
+}
+
+/**
+ * Parse a single CSV line, respecting quoted fields that may contain commas.
+ * e.g.  "Some, Org",123 -> ["Some, Org", "123"]
+ */
+function parseCSVLine(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (char === '"') {
+      if (inQuotes && i + 1 < line.length && line[i + 1] === '"') {
+        // Escaped double quote
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      result.push(current);
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  result.push(current);
+  return result;
 }

@@ -15,15 +15,41 @@ async function syncTimeEntries({ ticketId, entries }) {
     // console.log(`[TimeKeeper] Syncing ${entries.length} entries for ticket #${ticketId}`);
     const { time_entries = [] } = await browserAPI.storage.local.get('time_entries');
     
-    // Remove all existing entries for this ticket
+    // Separate existing entries for this ticket from others
+    const existingTicketEntries = time_entries.filter(e => e.ticketId === ticketId);
     const otherEntries = time_entries.filter(e => e.ticketId !== ticketId);
     
-    // Add the new entries from the page
-    const newEntries = entries.map(entry => ({
-      id: crypto.randomUUID(),
-      timestamp: Date.now(),
-      ...entry
-    }));
+    // Build a map of existing entries keyed by userName+date+billable for ID preservation
+    // This avoids creating new UUIDs on every sync, which causes popup re-render thrashing
+    const existingByKey = {};
+    for (const existing of existingTicketEntries) {
+      const key = `${existing.userName}|${existing.date}|${existing.billable}`;
+      if (!existingByKey[key]) existingByKey[key] = [];
+      existingByKey[key].push(existing);
+    }
+    
+    // Match new entries with existing ones to preserve IDs
+    const newEntries = entries.map(entry => {
+      const key = `${entry.userName}|${entry.date}|${entry.billable}`;
+      const candidates = existingByKey[key] || [];
+      
+      if (candidates.length > 0) {
+        // Take the first unmatched candidate to preserve its ID and timestamp
+        const match = candidates.shift();
+        return {
+          id: match.id,
+          timestamp: match.timestamp,
+          ...entry
+        };
+      }
+      
+      // New entry (not seen before) - generate fresh ID
+      return {
+        id: crypto.randomUUID(),
+        timestamp: Date.now(),
+        ...entry
+      };
+    });
 
     const updatedEntries = [...otherEntries, ...newEntries];
     await browserAPI.storage.local.set({ time_entries: updatedEntries });
@@ -70,7 +96,7 @@ async function updateBadge() {
 
   const todayEntries = time_entries.filter(e => e.date === todayISO || e.date === todayISOAlt);
   const todayMinutes = todayEntries.reduce((sum, e) => {
-    const mins = (parseInt(e.hours || 0, 10) * 60) + parseInt(e.minutes || 0, 10);
+    const mins = (parseInt(e.hours || 0, 10) * 60) + parseInt(e.minutes || 0, 10) + (parseInt(e.seconds || 0, 10) / 60);
     // console.log(`[TimeKeeper] Entry: ${e.hours}h ${e.minutes}m -> ${mins} mins (Ticket: ${e.ticketId})`);
     return sum + mins;
   }, 0);
